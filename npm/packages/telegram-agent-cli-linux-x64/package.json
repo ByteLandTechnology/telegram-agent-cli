@@ -1,6 +1,6 @@
 {
   "name": "telegram-agent-cli-linux-x64",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Prebuilt telegram-agent-cli binary for linux-x64.",
   "license": "UNLICENSED",
   "os": [

@@ -1,6 +1,6 @@
 [package]
 name = "telegram-cli"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Telegram automation CLI with structured output, runtime-state inspection, interactive REPL, scenario testing, and MCP server for AI agents"
 
