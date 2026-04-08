@@ -344,6 +344,54 @@ impl ConnectedClient {
     }
 }
 
+async fn export_qr_login_token(
+    connected: &ConnectedClient,
+    credentials: &ApiCredentials,
+) -> Result<tl::enums::auth::LoginToken> {
+    let result = connected
+        .client
+        .invoke(&tl::functions::auth::ExportLoginToken {
+            api_id: credentials.api_id,
+            api_hash: credentials.api_hash.clone(),
+            except_ids: vec![],
+        })
+        .await
+        .map_err(invocation_error)?;
+
+    resolve_qr_login_token_migration(connected, result).await
+}
+
+async fn resolve_qr_login_token_migration(
+    connected: &ConnectedClient,
+    mut result: tl::enums::auth::LoginToken,
+) -> Result<tl::enums::auth::LoginToken> {
+    for _ in 0..4 {
+        let tl::enums::auth::LoginToken::MigrateTo(migrate) = result else {
+            return Ok(result);
+        };
+
+        let old_dc_id = connected.session.home_dc_id();
+        let new_dc_id = migrate.dc_id;
+
+        if old_dc_id != new_dc_id {
+            connected.handle.disconnect_from_dc(old_dc_id);
+            connected.session.set_home_dc_id(new_dc_id).await;
+        }
+
+        result = connected
+            .client
+            .invoke(&tl::functions::auth::ImportLoginToken {
+                token: migrate.token,
+            })
+            .await
+            .map_err(invocation_error)?;
+    }
+
+    Err(TelegramCliError::Message(
+        "QR login hit repeated DC migrations; retry the login command".into(),
+    ))
+}
+
 #[async_trait(?Send)]
 impl TelegramAdapter for GrammersAdapter {
     async fn login(&self, account_name: &str, request: LoginRequest) -> Result<()> {
@@ -419,24 +467,12 @@ impl TelegramAdapter for GrammersAdapter {
                     }
                 }
                 LoginRequest::UserQr => {
-                    let result = connected
-                        .client
-                        .invoke(&tl::functions::auth::ExportLoginToken {
-                            api_id: credentials.api_id,
-                            api_hash: credentials.api_hash.clone(),
-                            except_ids: vec![],
-                        })
-                        .await
-                        .map_err(invocation_error)?;
+                    let result = export_qr_login_token(&connected, &credentials).await?;
 
                     let token = match result {
                         tl::enums::auth::LoginToken::Token(t) => t,
                         tl::enums::auth::LoginToken::Success(_) => return Ok(()),
-                        tl::enums::auth::LoginToken::MigrateTo(_) => {
-                            return Err(TelegramCliError::Message(
-                                "QR login requires a DC migration; not supported".into(),
-                            ))
-                        }
+                        tl::enums::auth::LoginToken::MigrateTo(_) => unreachable!(),
                     };
 
                     let url = format!("tg://login?token={}", BASE64URL.encode(&token.token));
@@ -466,15 +502,7 @@ impl TelegramAdapter for GrammersAdapter {
                             ));
                         }
 
-                        let result = connected
-                            .client
-                            .invoke(&tl::functions::auth::ExportLoginToken {
-                                api_id: credentials.api_id,
-                                api_hash: credentials.api_hash.clone(),
-                                except_ids: vec![],
-                            })
-                            .await
-                            .map_err(invocation_error)?;
+                        let result = export_qr_login_token(&connected, &credentials).await?;
 
                         match result {
                             tl::enums::auth::LoginToken::Success(_) => {
@@ -492,11 +520,7 @@ impl TelegramAdapter for GrammersAdapter {
                                 return Ok(());
                             }
                             tl::enums::auth::LoginToken::Token(_) => continue,
-                            tl::enums::auth::LoginToken::MigrateTo(_) => {
-                                return Err(TelegramCliError::Message(
-                                    "DC migration during QR login".into(),
-                                ))
-                            }
+                            tl::enums::auth::LoginToken::MigrateTo(_) => unreachable!(),
                         }
                     }
                 }
