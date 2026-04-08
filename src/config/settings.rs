@@ -1,0 +1,7 @@
+pub const ENV_CONFIG_DIR: &str = "TELEGRAM_CLI_CONFIG_DIR";
+pub const ENV_DATA_DIR: &str = "TELEGRAM_CLI_DATA_DIR";
+pub const ENV_STATE_DIR: &str = "TELEGRAM_CLI_STATE_DIR";
+pub const ENV_CACHE_DIR: &str = "TELEGRAM_CLI_CACHE_DIR";
+pub const ENV_MASTER_KEY: &str = "TELEGRAM_CLI_MASTER_KEY";
+pub const ENV_API_ID: &str = "TELEGRAM_CLI_API_ID";
+pub const ENV_API_HASH: &str = "TELEGRAM_CLI_API_HASH";

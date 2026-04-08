@@ -1,0 +1,81 @@
+name: Setup Build Environment
+description: Install system dependencies for building
+runs:
+  using: composite
+  steps:
+    - name: Install Linux dependencies
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsqlite3-dev
+
+    - name: Install macOS cross-build toolchains
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if ! command -v zig >/dev/null 2>&1; then
+          brew install zig
+        fi
+
+        if ! command -v cargo-zigbuild >/dev/null 2>&1; then
+          cargo install cargo-zigbuild --locked
+        fi
+
+        llvm_mingw_version="20260324"
+        archive="llvm-mingw-${llvm_mingw_version}-ucrt-macos-universal.tar.xz"
+        archive_path="$RUNNER_TEMP/$archive"
+        tool_root="$RUNNER_TEMP/llvm-mingw-${llvm_mingw_version}-ucrt-macos-universal"
+
+        if [ ! -d "$tool_root" ]; then
+          curl -L "https://github.com/mstorsjo/llvm-mingw/releases/download/${llvm_mingw_version}/${archive}" -o "$archive_path"
+          tar -xf "$archive_path" -C "$RUNNER_TEMP"
+        fi
+
+        echo "$tool_root/bin" >> "$GITHUB_PATH"
+        {
+          echo "CC_x86_64_pc_windows_gnullvm=$tool_root/bin/x86_64-w64-mingw32-clang"
+          echo "CXX_x86_64_pc_windows_gnullvm=$tool_root/bin/x86_64-w64-mingw32-clang++"
+          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNULLVM_LINKER=$tool_root/bin/x86_64-w64-mingw32-clang"
+          echo "AR_x86_64_pc_windows_gnullvm=$tool_root/bin/llvm-ar"
+          echo "RANLIB_x86_64_pc_windows_gnullvm=$tool_root/bin/llvm-ranlib"
+          echo "CC_aarch64_pc_windows_gnullvm=$tool_root/bin/aarch64-w64-mingw32-clang"
+          echo "CXX_aarch64_pc_windows_gnullvm=$tool_root/bin/aarch64-w64-mingw32-clang++"
+          echo "CARGO_TARGET_AARCH64_PC_WINDOWS_GNULLVM_LINKER=$tool_root/bin/aarch64-w64-mingw32-clang"
+          echo "AR_aarch64_pc_windows_gnullvm=$tool_root/bin/llvm-ar"
+          echo "RANLIB_aarch64_pc_windows_gnullvm=$tool_root/bin/llvm-ranlib"
+        } >> "$GITHUB_ENV"
+
+    - name: Install Windows gnullvm toolchain
+      if: runner.os == 'Windows' && contains(env.TARGET, 'windows-gnullvm')
+      shell: pwsh
+      run: |
+        $llvmMingwVersion = "20260324"
+        $archive = switch ($env:TARGET) {
+          "x86_64-pc-windows-gnullvm" { "llvm-mingw-$llvmMingwVersion-ucrt-x86_64.zip" }
+          "aarch64-pc-windows-gnullvm" { "llvm-mingw-$llvmMingwVersion-ucrt-aarch64.zip" }
+          default { throw "Unsupported Windows gnullvm target: $env:TARGET" }
+        }
+        $uri = "https://github.com/mstorsjo/llvm-mingw/releases/download/$llvmMingwVersion/$archive"
+        $archivePath = Join-Path $env:RUNNER_TEMP $archive
+        $installRoot = Join-Path $env:RUNNER_TEMP "llvm-mingw"
+        Invoke-WebRequest -Uri $uri -OutFile $archivePath
+        Expand-Archive -LiteralPath $archivePath -DestinationPath $installRoot -Force
+        $toolRoot = Get-ChildItem -Path $installRoot -Directory | Select-Object -First 1
+        "$($toolRoot.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+        if ($env:TARGET -eq "x86_64-pc-windows-gnullvm") {
+          "CC_x86_64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\x86_64-w64-mingw32-clang.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CXX_x86_64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\x86_64-w64-mingw32-clang++.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CARGO_TARGET_X86_64_PC_WINDOWS_GNULLVM_LINKER=$($toolRoot.FullName)\bin\x86_64-w64-mingw32-clang.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "AR_x86_64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\llvm-ar.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "RANLIB_x86_64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\llvm-ranlib.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        } else {
+          "CC_aarch64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\aarch64-w64-mingw32-clang.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CXX_aarch64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\aarch64-w64-mingw32-clang++.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CARGO_TARGET_AARCH64_PC_WINDOWS_GNULLVM_LINKER=$($toolRoot.FullName)\bin\aarch64-w64-mingw32-clang.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "AR_aarch64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\llvm-ar.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "RANLIB_aarch64_pc_windows_gnullvm=$($toolRoot.FullName)\bin\llvm-ranlib.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        }

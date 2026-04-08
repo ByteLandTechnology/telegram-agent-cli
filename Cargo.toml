@@ -1,0 +1,52 @@
+[package]
+name = "telegram-cli"
+version = "1.0.0"
+edition = "2021"
+description = "Telegram automation CLI with structured output, runtime-state inspection, interactive REPL, scenario testing, and MCP server for AI agents"
+
+[lib]
+name = "telegram_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "telegram-agent-cli"
+path = "src/main.rs"
+
+[dependencies]
+aes-gcm = "0.10.3"
+async-trait = "0.1.89"
+base64 = "0.22.1"
+chrono = { version = "0.4.42", features = ["clock", "serde"] }
+clap = { version = "4.5.48", features = ["derive", "env"] }
+directories = "6.0.0"
+futures-core = "0.3.32"
+grammers-client = "0.9.0"
+grammers-session = { version = "0.9.0", default-features = false, features = ["serde"] }
+grammers-tl-types = "0.9.0"
+humantime = "2.3.0"
+miette = { version = "7.4.0", features = ["fancy"] }
+qrcode = "0.14"
+rand = "0.8.5"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+rustyline = { version = "15", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.145", features = ["preserve_order"] }
+serde_yaml = "0.9.34"
+toml = { version = "0.8.19", features = ["preserve_order"] }
+sha2 = "0.10.9"
+thiserror = "2.0.17"
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+
+[dev-dependencies]
+assert_cmd = "2.0.16"
+predicates = "3.1.3"
+tempfile = "3.23.0"
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce parallel code generation for better size
+panic = "abort"     # Remove panic-handling code
+strip = true        # Strip symbols from binary

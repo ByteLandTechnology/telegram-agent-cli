@@ -1,0 +1,30 @@
+{
+  "name": "telegram-agent-cli-linux-x64",
+  "version": "1.0.0",
+  "description": "Prebuilt telegram-agent-cli binary for linux-x64.",
+  "license": "UNLICENSED",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/telegram-agent-cli",
+    "README.md"
+  ],
+  "bin": {
+    "telegram-agent-cli": "bin/telegram-agent-cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ByteLandTechnology/telegram-agent-cli.git"
+  },
+  "homepage": "https://github.com/ByteLandTechnology/telegram-agent-cli#readme",
+  "bugs": {
+    "url": "https://github.com/ByteLandTechnology/telegram-agent-cli/issues"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "branches": ["main"],
+  "tagFormat": "v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "feat", "release": "minor" },
+          { "type": "fix", "release": "patch" },
+          { "type": "perf", "release": "patch" },
+          { "type": "refactor", "release": "patch" },
+          { "type": "docs", "release": "patch" },
+          { "type": "style", "release": "patch" },
+          { "type": "test", "release": "patch" },
+          { "type": "build", "release": "patch" },
+          { "type": "ci", "release": "patch" },
+          { "type": "revert", "release": "patch" },
+          { "type": "chore", "scope": "deps", "release": "patch" },
+          { "type": "chore", "scope": "release", "release": false },
+          { "breaking": true, "release": "major" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node ./npm/prepare-release.cjs ${nextRelease.version} && node ./scripts/release/build-release-artifacts.mjs --version ${nextRelease.version}"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "CHANGELOG.md",
+          "package.json",
+          "package-lock.json",
+          "npm/packages/*/package.json",
+          "Cargo.toml",
+          "Cargo.lock"
+        ],
+        "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "node ./scripts/release/write-release-evidence-from-dist.mjs --version ${nextRelease.version} --git-tag ${nextRelease.gitTag} --dist ./dist && node ./scripts/release/verify-npm-package-set.mjs --version ${nextRelease.version} --git-tag ${nextRelease.gitTag} --require-release-evidence --release-evidence ./.work/release/github-release/release-evidence.json --staged-dist ./dist/npm"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          "dist/*.tar.gz",
+          "dist/*.zip",
+          "dist/*.sha256",
+          ".work/release/github-release/release-evidence.json",
+          ".release-manifest.json"
+        ]
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "node ./scripts/release/publish-npm-package-set.mjs --publish --version ${nextRelease.version} --git-tag ${nextRelease.gitTag} --release-evidence ./.work/release/github-release/release-evidence.json --staged-dist ./dist/npm"
+      }
+    ]
+  ]
+}

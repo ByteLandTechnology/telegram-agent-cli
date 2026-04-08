@@ -1,0 +1,107 @@
+{
+  "sourceSkillId": "telegram-agent-cli",
+  "sourceRepository": "ByteLandTechnology/telegram-agent-cli",
+  "sourceRepositoryEnv": "GITHUB_REPOSITORY",
+  "metadataFilename": ".release-manifest.json",
+  "githubRelease": {
+    "ownerRepository": "ByteLandTechnology/telegram-agent-cli",
+    "ownerRepositoryEnv": "GITHUB_REPOSITORY",
+    "releaseEvidenceFilename": "release-evidence.json",
+    "releaseAssetsDir": ".work/release/github-release",
+    "installScriptPath": "scripts/install-current-release.sh",
+    "installCommandExample": "./scripts/install-current-release.sh",
+    "assetGlobPatterns": [".work/release/github-release/*"]
+  },
+  "optionalSecondaryPublication": {
+    "enabled": false,
+    "destinationRepository": "ByteLandTechnology/telegram-agent-cli",
+    "destinationRepositoryEnv": "SKILL_RELEASE_DESTINATION_REPOSITORY",
+    "destinationBranch": "main",
+    "destinationTokenEnv": "DESTINATION_REPOSITORY_TOKEN",
+    "sharedRepository": {
+      "catalogPath": "catalog.json",
+      "skillRootPrefix": "skills",
+      "retentionPolicy": "current_only",
+      "updateMode": "merged_tree_publish"
+    }
+  },
+  "generatedSkill": {
+    "skillName": "telegram-agent-cli",
+    "description": "Telegram automation CLI for testing bots, running scenarios, and exposing Telegram operations as MCP tools for AI agents.",
+    "author": "ByteLandTechnology",
+    "version": "0.1.0",
+    "rustEdition": "2021",
+    "projectPath": ".work/release/generated-skill/telegram-agent-cli",
+    "templates": {
+      "templates/Cargo.toml.tpl": "Cargo.toml",
+      "templates/main.rs.tpl": "src/main.rs",
+      "templates/lib.rs.tpl": "src/lib.rs",
+      "templates/help.rs.tpl": "src/help.rs",
+      "templates/context.rs.tpl": "src/context.rs",
+      "templates/SKILL.md.tpl": "SKILL.md",
+      "templates/cli_test.rs.tpl": "tests/cli_test.rs",
+      "templates/README.md.tpl": "README.md",
+      "templates/install-current-release.sh.tpl": "scripts/install-current-release.sh"
+    }
+  },
+  "artifactBuild": {
+    "artifactsDir": ".work/release/artifacts",
+    "binaryName": "telegram-agent-cli",
+    "releaseMetadataFilename": "release.json",
+    "syntheticRehearsalNotice": "Rehearsal archives may contain synthetic executable stubs when CI-built binaries are unavailable locally."
+  },
+  "artifactTargets": [
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "required": true,
+      "runner": "ubuntu-latest",
+      "archiveFormat": "tar.gz"
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "required": true,
+      "runner": "ubuntu-24.04-arm",
+      "archiveFormat": "tar.gz"
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "required": true,
+      "runner": "macos-14",
+      "archiveFormat": "tar.gz"
+    },
+    {
+      "target": "x86_64-apple-darwin",
+      "required": true,
+      "runner": "macos-13",
+      "archiveFormat": "tar.gz"
+    },
+    {
+      "target": "x86_64-pc-windows-gnullvm",
+      "required": true,
+      "runner": "windows-latest",
+      "archiveFormat": "zip"
+    },
+    {
+      "target": "aarch64-pc-windows-gnullvm",
+      "required": true,
+      "runner": "windows-11-arm",
+      "archiveFormat": "zip"
+    }
+  ],
+  "generatedPackageBoundary": {
+    "packageLocalSupportExamples": [
+      "packaging-ready metadata",
+      "support fixtures",
+      "artifact manifests",
+      "repo-native install helper"
+    ],
+    "repositoryOwnedAutomation": [
+      ".github/workflows/release.yml",
+      "release/skill-release.config.json",
+      "scripts/release",
+      ".releaserc.json",
+      "package.json",
+      "package-lock.json"
+    ]
+  }
+}

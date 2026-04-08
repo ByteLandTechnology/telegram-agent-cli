@@ -1,0 +1,64 @@
+{
+  "name": "telegram-agent-cli",
+  "version": "1.0.0",
+  "description": "Telegram automation CLI for testing bots, running scenarios, and exposing Telegram operations as an MCP server.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "22.x"
+  },
+  "packageManager": "bun@1.x",
+  "bin": {
+    "telegram-agent-cli": "./bin/telegram-agent-cli.cjs"
+  },
+  "files": [
+    "bin/",
+    "npm/",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "optionalDependencies": {
+    "telegram-agent-cli-darwin-arm64": "1.0.0",
+    "telegram-agent-cli-darwin-x64": "1.0.0",
+    "telegram-agent-cli-linux-arm64": "1.0.0",
+    "telegram-agent-cli-linux-x64": "1.0.0",
+    "telegram-agent-cli-windows-arm64": "1.0.0",
+    "telegram-agent-cli-windows-x64": "1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ByteLandTechnology/telegram-agent-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ByteLandTechnology/telegram-agent-cli/issues"
+  },
+  "homepage": "https://github.com/ByteLandTechnology/telegram-agent-cli#readme",
+  "scripts": {
+    "postinstall": "node ./npm/postinstall.cjs",
+    "quality-gates": "cargo fmt --check && cargo clippy -- -D warnings && cargo test",
+    "semantic-release": "semantic-release",
+    "build:artifacts": "bun run .github/workflows/build-artifacts.ts",
+    "release:prepare": "node ./npm/prepare-release.cjs",
+    "release:build-all": "node ./scripts/release/build-release-artifacts.mjs",
+    "release:npm:verify": "node ./scripts/release/verify-npm-package-set.mjs",
+    "release:npm:dry-run": "node ./scripts/release/publish-npm-package-set.mjs --dry-run --staged-dist ./dist/npm",
+    "release:npm:publish": "node ./scripts/release/publish-npm-package-set.mjs --publish --staged-dist ./dist/npm",
+    "release:quality-gates": "node scripts/release/run-generated-skill-quality-gates.mjs",
+    "release:build-artifact": "node scripts/release/build-cli-artifact.mjs",
+    "release:verify-config": "node scripts/release/verify-release-config.mjs",
+    "release:ci": "node scripts/release/run-semantic-release.mjs",
+    "release:dry-run": "node scripts/release/run-semantic-release.mjs --dry-run --no-ci",
+    "release:install-current": "./scripts/install-current-release.sh"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/exec": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/github": "^11.0.0",
+    "@semantic-release/release-notes-generator": "^14.0.0",
+    "conventional-changelog-conventionalcommits": "^7.0.0",
+    "semantic-release": "^24.0.0"
+  }
+}
