@@ -4,7 +4,7 @@ Telegram automation CLI for testing bots, running scenarios, and exposing
 Telegram operations as MCP tools for AI agents.
 
 Structured output in YAML (default), JSON, TOML, table, or NDJSON.
-Encrypted local storage. Interactive REPL. Scenario runner.
+Encrypted local storage. Interactive REPL. Managed daemon mode. Scenario runner.
 
 ## Install
 
@@ -155,6 +155,10 @@ telegram-agent-cli message follow --as mybot --chat @user --format ndjson  # NDJ
 Structured results use a `ResultEnvelope` with `command`, `status`, `summary`,
 `data`, `next_steps`, and `errors`. Sensitive fields are redacted automatically.
 
+When you use the managed daemon lifecycle, daemon metadata is stored at
+`state_dir/daemon/server.json` and daemon logs are written to
+`state_dir/daemon/server.log`.
+
 ## Account Management
 
 ```sh
@@ -291,6 +295,23 @@ Configure in Claude Desktop or other MCP clients:
 ```json
 { "command": "telegram-agent-cli", "args": ["mcp"] }
 ```
+
+## Daemon Mode
+
+Run the same JSON-RPC/MCP tool surface as a managed background daemon:
+
+```sh
+telegram-agent-cli daemon start
+telegram-agent-cli daemon status --format json
+telegram-agent-cli daemon stop
+```
+
+The daemon binds a local loopback TCP endpoint, records its runtime metadata
+under the telegram-agent-cli state directory, and preserves the shared managed
+contract: `daemon start`, `daemon stop`, `daemon restart`, and
+`daemon status`. Foreground attached execution remains out of scope; use
+`telegram-agent-cli mcp` when you want a stdio-bound server in the current
+terminal.
 
 ## Diagnostics
 

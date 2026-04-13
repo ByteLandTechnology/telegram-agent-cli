@@ -84,6 +84,11 @@ pub enum Commands {
     Repl(ReplArgs),
     /// Start as an MCP tool server for AI agents.
     Mcp(McpArgs),
+    /// Manage the background JSON-RPC daemon lifecycle.
+    Daemon {
+        #[command(subcommand)]
+        command: DaemonCommand,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -121,6 +126,50 @@ pub struct ReplArgs {
 
 #[derive(Debug, Args)]
 pub struct McpArgs {}
+
+#[derive(Debug, Subcommand)]
+pub enum DaemonCommand {
+    /// Start the background JSON-RPC daemon.
+    Start(DaemonStartArgs),
+    /// Stop the background JSON-RPC daemon.
+    Stop(DaemonStopArgs),
+    /// Restart the background JSON-RPC daemon.
+    Restart(DaemonRestartArgs),
+    /// Inspect the background JSON-RPC daemon state.
+    Status(DaemonStatusArgs),
+    #[command(name = "__serve", hide = true)]
+    Serve(DaemonServeArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct DaemonStartArgs {
+    /// How long to wait for the daemon to become ready.
+    #[arg(long, default_value = "10s")]
+    pub timeout: String,
+}
+
+#[derive(Debug, Args)]
+pub struct DaemonStopArgs {
+    /// How long to wait for the daemon to stop.
+    #[arg(long, default_value = "10s")]
+    pub timeout: String,
+}
+
+#[derive(Debug, Args)]
+pub struct DaemonRestartArgs {
+    /// How long to wait for stop/start transitions during restart.
+    #[arg(long, default_value = "10s")]
+    pub timeout: String,
+}
+
+#[derive(Debug, Args, Default)]
+pub struct DaemonStatusArgs {}
+
+#[derive(Debug, Args)]
+pub struct DaemonServeArgs {
+    #[arg(long, hide = true)]
+    pub metadata_path: PathBuf,
+}
 
 #[derive(Debug, Subcommand)]
 pub enum MessageCommand {
@@ -682,6 +731,7 @@ pub const TOP_LEVEL_HELP_METADATA: TopLevelHelpMetadata = TopLevelHelpMetadata {
         "run: Execute a stored scenario file. Use telegram-agent-cli run --help.",
         "repl: Open an interactive testing session. Use telegram-agent-cli repl --help.",
         "mcp: Start as an MCP tool server for AI agents. Use telegram-agent-cli mcp --help.",
+        "daemon: Manage the background JSON-RPC daemon. Use telegram-agent-cli daemon --help.",
     ],
     next_steps: &[
         "telegram-agent-cli help account add-bot",
@@ -691,6 +741,7 @@ pub const TOP_LEVEL_HELP_METADATA: TopLevelHelpMetadata = TopLevelHelpMetadata {
         "telegram-agent-cli message --help",
         "telegram-agent-cli doctor --help",
         "telegram-agent-cli repl --help",
+        "telegram-agent-cli daemon --help",
     ],
 };
 
@@ -785,6 +836,35 @@ pub const COMMAND_GROUP_HELP_METADATA: &[CommandGroupHelpMetadata] = &[
         next_steps: &["telegram-agent-cli peer resolve --help"],
         related_commands: &["telegram-agent-cli alias --help", "telegram-agent-cli list --help"],
     },
+    CommandGroupHelpMetadata {
+        command_path: "telegram-agent-cli bot",
+        summary: "Manage bot profile metadata and command menus.",
+        actions: &[
+            "Choose bot set-commands to publish the bot command menu shown in chat.",
+            "Choose bot set-info to update the bot description and about text.",
+        ],
+        next_steps: &[
+            "telegram-agent-cli bot set-commands --help",
+            "telegram-agent-cli bot set-info --help",
+        ],
+        related_commands: &["telegram-agent-cli account --help", "telegram-agent-cli message --help"],
+    },
+    CommandGroupHelpMetadata {
+        command_path: "telegram-agent-cli daemon",
+        summary: "Manage the background JSON-RPC daemon that exposes the same MCP tool surface without keeping a foreground terminal attached.",
+        actions: &[
+            "Choose daemon start to launch the managed background service.",
+            "Choose daemon status to inspect whether the daemon is running and where it is listening.",
+            "Choose daemon stop or restart to recover the managed background service from the CLI.",
+        ],
+        next_steps: &[
+            "telegram-agent-cli daemon start --help",
+            "telegram-agent-cli daemon status --help",
+            "telegram-agent-cli daemon stop --help",
+            "telegram-agent-cli daemon restart --help",
+        ],
+        related_commands: &["telegram-agent-cli mcp --help", "telegram-agent-cli doctor --help"],
+    },
 ];
 
 pub const LEAF_HELP_METADATA: &[LeafHelpMetadata] = &[
@@ -876,6 +956,48 @@ pub const LEAF_HELP_METADATA: &[LeafHelpMetadata] = &[
             "Configure in Claude Desktop: {\"command\": \"telegram-agent-cli\", \"args\": [\"mcp\"]}",
         ],
         next_steps: &["telegram-agent-cli account --help", "telegram-agent-cli repl --help"],
+    },
+    LeafHelpMetadata {
+        command_path: "telegram-agent-cli daemon start",
+        summary: "Launch the managed background JSON-RPC daemon and wait until it is ready.",
+        prerequisites: &[
+            "Use this when you want the MCP-style tool server to keep running after the current terminal session exits.",
+        ],
+        examples: &[
+            "telegram-agent-cli daemon start",
+            "telegram-agent-cli daemon start --timeout 15s",
+        ],
+        next_steps: &["telegram-agent-cli daemon status --help", "telegram-agent-cli daemon stop --help"],
+    },
+    LeafHelpMetadata {
+        command_path: "telegram-agent-cli daemon stop",
+        summary: "Request a graceful shutdown of the managed background daemon and wait for it to exit.",
+        prerequisites: &["Ensure the daemon was previously started from the same runtime state root before stopping it."],
+        examples: &[
+            "telegram-agent-cli daemon stop",
+            "telegram-agent-cli daemon stop --timeout 15s",
+        ],
+        next_steps: &["telegram-agent-cli daemon status --help", "telegram-agent-cli daemon start --help"],
+    },
+    LeafHelpMetadata {
+        command_path: "telegram-agent-cli daemon restart",
+        summary: "Restart the managed background daemon when you need to recover from a stale or unhealthy state.",
+        prerequisites: &["Use this when daemon status reports stale state or when you need to reload the background service from the CLI."],
+        examples: &[
+            "telegram-agent-cli daemon restart",
+            "telegram-agent-cli daemon restart --timeout 20s",
+        ],
+        next_steps: &["telegram-agent-cli daemon status --help", "telegram-agent-cli daemon stop --help"],
+    },
+    LeafHelpMetadata {
+        command_path: "telegram-agent-cli daemon status",
+        summary: "Inspect whether the managed background daemon is running, stale, or stopped.",
+        prerequisites: &["Use this before starting or stopping the daemon if you need to confirm the current managed state."],
+        examples: &[
+            "telegram-agent-cli daemon status",
+            "telegram-agent-cli daemon status --format json",
+        ],
+        next_steps: &["telegram-agent-cli daemon start --help", "telegram-agent-cli daemon restart --help"],
     },
     LeafHelpMetadata {
         command_path: "telegram-agent-cli account add-user",

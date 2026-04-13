@@ -1,6 +1,7 @@
 pub mod account;
 pub mod bot;
 pub mod context;
+pub mod daemon;
 pub mod doctor;
 pub mod list;
 pub mod mcp;

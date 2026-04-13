@@ -1,5 +1,5 @@
 [package]
-name = "telegram-cli"
+name = "telegram-agent-cli"
 version = "1.0.1"
 edition = "2021"
 description = "Telegram automation CLI with structured output, runtime-state inspection, interactive REPL, scenario testing, and MCP server for AI agents"
@@ -35,7 +35,7 @@ serde_yaml = "0.9.34"
 toml = { version = "0.8.19", features = ["preserve_order"] }
 sha2 = "0.10.9"
 thiserror = "2.0.17"
-tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.44.2", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
 

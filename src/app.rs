@@ -27,9 +27,13 @@ pub async fn run_with_context(cli: Cli, context: &AppContext) -> Result<()> {
     let format = crate::output::Format::from_str(&cli.format)?;
     match cli.command {
         Commands::Help(args) => {
-            let document =
-                crate::output::guidance::render_help_document_for_path(&args.command_path)?;
-            format.print(&document)
+            if args.command_path.len() == 1 && args.command_path[0] == "repl" {
+                crate::output::guidance::print_human_help_for_path(&args.command_path)
+            } else {
+                let document =
+                    crate::output::guidance::render_help_document_for_path(&args.command_path)?;
+                format.print(&document)
+            }
         }
         Commands::Paths(_) => crate::commands::paths::run(context, format),
         Commands::Context { command } => crate::commands::context::run(context, command, format),
@@ -70,6 +74,9 @@ pub async fn run_with_context(cli: Cli, context: &AppContext) -> Result<()> {
         Commands::Run(args) => crate::commands::scenario::run(context, args, format).await,
         Commands::Bot { command } => crate::commands::bot::run(context, command, format).await,
         Commands::Mcp(_) => crate::commands::mcp::run(context).await,
+        Commands::Daemon { command } => {
+            crate::commands::daemon::run(context, command, format).await
+        }
     }
 }
 

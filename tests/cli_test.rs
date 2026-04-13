@@ -1,8 +1,16 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
+use tempfile::TempDir;
 
 fn telegram_cli() -> Command {
     Command::cargo_bin("telegram-agent-cli").unwrap()
+}
+
+fn apply_runtime_env(command: &mut Command, runtime: &TempDir) {
+    command.env("TELEGRAM_CLI_CONFIG_DIR", runtime.path().join("config"));
+    command.env("TELEGRAM_CLI_DATA_DIR", runtime.path().join("data"));
+    command.env("TELEGRAM_CLI_STATE_DIR", runtime.path().join("state"));
+    command.env("TELEGRAM_CLI_CACHE_DIR", runtime.path().join("cache"));
 }
 
 #[test]
@@ -59,6 +67,40 @@ fn structured_help_json() {
         .success()
         .stdout(predicate::str::contains("\"command\":"))
         .stdout(predicate::str::contains("\"summary\":"));
+}
+
+#[test]
+fn structured_help_json_supports_bot_group() {
+    telegram_cli()
+        .args(["help", "bot", "--format", "json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "\"command\": \"telegram-agent-cli bot\"",
+        ))
+        .stdout(predicate::str::contains("\"summary\":"));
+}
+
+#[test]
+fn structured_help_json_supports_daemon_leaf() {
+    telegram_cli()
+        .args(["help", "daemon", "status", "--format", "json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "\"command\": \"telegram-agent-cli daemon status\"",
+        ))
+        .stdout(predicate::str::contains("\"summary\":"));
+}
+
+#[test]
+fn repl_help_from_help_subcommand_stays_plain_text() {
+    telegram_cli()
+        .args(["help", "repl", "--format", "json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Usage: telegram-agent-cli repl"))
+        .stdout(predicate::str::contains("\"command\":").not());
 }
 
 #[test]
@@ -133,6 +175,7 @@ fn help_subcommand_lists_subcommands() {
         .assert()
         .success()
         .stdout(predicate::str::contains("account:"))
+        .stdout(predicate::str::contains("daemon:"))
         .stdout(predicate::str::contains("message:"))
         .stdout(predicate::str::contains("repl:"));
 }
@@ -145,4 +188,53 @@ fn help_leaf_command_returns_details() {
         .success()
         .stdout(predicate::str::contains("command:"))
         .stdout(predicate::str::contains("options:"));
+}
+
+#[test]
+fn daemon_lifecycle_is_managed_by_cli() {
+    let runtime = tempfile::tempdir().unwrap();
+    let metadata_path = runtime.path().join("state/daemon/server.json");
+
+    let mut start = telegram_cli();
+    apply_runtime_env(&mut start, &runtime);
+    start
+        .args(["--format", "json", "daemon", "start"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"state\": \"running\""))
+        .stdout(predicate::str::contains("\"running\": true"));
+    assert!(
+        metadata_path.exists(),
+        "daemon metadata should exist after start"
+    );
+
+    let mut status = telegram_cli();
+    apply_runtime_env(&mut status, &runtime);
+    status
+        .args(["--format", "json", "daemon", "status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"state\": \"running\""))
+        .stdout(predicate::str::contains("\"running\": true"));
+
+    let mut stop = telegram_cli();
+    apply_runtime_env(&mut stop, &runtime);
+    stop.args(["--format", "json", "daemon", "stop"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"state\": \"stopped\""))
+        .stdout(predicate::str::contains("\"running\": false"));
+    assert!(
+        !metadata_path.exists(),
+        "daemon metadata should be removed after stop"
+    );
+
+    let mut stopped_status = telegram_cli();
+    apply_runtime_env(&mut stopped_status, &runtime);
+    stopped_status
+        .args(["--format", "json", "daemon", "status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"state\": \"stopped\""))
+        .stdout(predicate::str::contains("\"running\": false"));
 }

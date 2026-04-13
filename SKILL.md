@@ -182,6 +182,10 @@ errors: []
 telegram-agent-cli message follow --as alice --chat qa-bot --format ndjson
 ```
 
+When managed daemon mode is enabled, daemon metadata is stored at
+`state_dir/daemon/server.json` and daemon logs are written to
+`state_dir/daemon/server.log`.
+
 ### Active Context
 
 Most commands include an `active_context` block showing the persisted and

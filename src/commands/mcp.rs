@@ -10,35 +10,35 @@ use std::time::Duration;
 // ---------------------------------------------------------------------------
 
 #[derive(Deserialize)]
-struct Request {
+pub(crate) struct Request {
     #[allow(dead_code)]
-    jsonrpc: String,
+    pub(crate) jsonrpc: String,
     #[serde(default)]
-    id: Option<Value>,
-    method: String,
+    pub(crate) id: Option<Value>,
+    pub(crate) method: String,
     #[serde(default)]
-    params: Option<Value>,
+    pub(crate) params: Option<Value>,
 }
 
 #[derive(Serialize)]
-struct Response {
-    jsonrpc: &'static str,
+pub(crate) struct Response {
+    pub(crate) jsonrpc: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    id: Option<Value>,
+    pub(crate) id: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    result: Option<Value>,
+    pub(crate) result: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<RpcError>,
+    pub(crate) error: Option<RpcError>,
 }
 
 #[derive(Serialize)]
-struct RpcError {
-    code: i64,
-    message: String,
+pub(crate) struct RpcError {
+    pub(crate) code: i64,
+    pub(crate) message: String,
 }
 
 impl Response {
-    fn success(id: Option<Value>, result: Value) -> Self {
+    pub(crate) fn success(id: Option<Value>, result: Value) -> Self {
         Self {
             jsonrpc: "2.0",
             id,
@@ -47,7 +47,7 @@ impl Response {
         }
     }
 
-    fn error(id: Option<Value>, code: i64, message: String) -> Self {
+    pub(crate) fn error(id: Option<Value>, code: i64, message: String) -> Self {
         Self {
             jsonrpc: "2.0",
             id,
@@ -73,11 +73,10 @@ pub async fn run(context: &AppContext) -> Result<()> {
             continue;
         }
 
-        let request: Request = match serde_json::from_str(&line) {
-            Ok(r) => r,
-            Err(e) => {
-                let resp = Response::error(None, -32700, format!("Parse error: {e}"));
-                write_response(&mut stdout, &resp)?;
+        let request = match parse_request_line(&line) {
+            Ok(request) => request,
+            Err(response) => {
+                write_response(&mut stdout, &response)?;
                 continue;
             }
         };
@@ -94,9 +93,23 @@ pub async fn run(context: &AppContext) -> Result<()> {
     Ok(())
 }
 
+pub(crate) fn parse_request_line(line: &str) -> std::result::Result<Request, Box<Response>> {
+    serde_json::from_str(line).map_err(|error| {
+        Box::new(Response::error(
+            None,
+            -32700,
+            format!("Parse error: {error}"),
+        ))
+    })
+}
+
+pub(crate) fn render_response(resp: &Response) -> Result<String> {
+    serde_json::to_string(resp)
+        .map_err(|e| TelegramCliError::Message(format!("JSON serialization failed: {e}")))
+}
+
 fn write_response(stdout: &mut io::Stdout, resp: &Response) -> Result<()> {
-    let json = serde_json::to_string(resp)
-        .map_err(|e| TelegramCliError::Message(format!("JSON serialization failed: {e}")))?;
+    let json = render_response(resp)?;
     writeln!(stdout, "{json}")?;
     stdout.flush()?;
     Ok(())
@@ -106,7 +119,7 @@ fn write_response(stdout: &mut io::Stdout, resp: &Response) -> Result<()> {
 // Method dispatch
 // ---------------------------------------------------------------------------
 
-async fn handle(context: &AppContext, req: &Request) -> Response {
+pub(crate) async fn handle(context: &AppContext, req: &Request) -> Response {
     match req.method.as_str() {
         "initialize" => handle_initialize(req),
         "ping" => Response::success(req.id.clone(), json!({})),

@@ -694,6 +694,11 @@ fn help_command_path_for_key(key: &[&str]) -> Option<&'static str> {
         ["bot"] => Some("telegram-agent-cli bot"),
         ["bot", "set-commands"] => Some("telegram-agent-cli bot set-commands"),
         ["bot", "set-info"] => Some("telegram-agent-cli bot set-info"),
+        ["daemon"] => Some("telegram-agent-cli daemon"),
+        ["daemon", "start"] => Some("telegram-agent-cli daemon start"),
+        ["daemon", "stop"] => Some("telegram-agent-cli daemon stop"),
+        ["daemon", "restart"] => Some("telegram-agent-cli daemon restart"),
+        ["daemon", "status"] => Some("telegram-agent-cli daemon status"),
         _ => None,
     }
 }

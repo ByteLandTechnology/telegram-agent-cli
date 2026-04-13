@@ -1956,7 +1956,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "telegram-cli"
+name = "telegram-agent-cli"
 version = "1.0.1"
 dependencies = [
  "aes-gcm",
