@@ -1,6 +1,6 @@
 {
   "name": "telegram-agent-cli-darwin-x64",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Prebuilt telegram-agent-cli binary for darwin-x64.",
   "license": "UNLICENSED",
   "os": [

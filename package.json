@@ -1,6 +1,6 @@
 {
   "name": "telegram-agent-cli",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Telegram automation CLI for testing bots, running scenarios, and exposing Telegram operations as an MCP server.",
   "license": "UNLICENSED",
   "engines": {
@@ -19,12 +19,12 @@
     "access": "public"
   },
   "optionalDependencies": {
-    "telegram-agent-cli-darwin-arm64": "1.0.1",
-    "telegram-agent-cli-darwin-x64": "1.0.1",
-    "telegram-agent-cli-linux-arm64": "1.0.1",
-    "telegram-agent-cli-linux-x64": "1.0.1",
-    "telegram-agent-cli-windows-arm64": "1.0.1",
-    "telegram-agent-cli-windows-x64": "1.0.1"
+    "telegram-agent-cli-darwin-arm64": "1.1.0",
+    "telegram-agent-cli-darwin-x64": "1.1.0",
+    "telegram-agent-cli-linux-arm64": "1.1.0",
+    "telegram-agent-cli-linux-x64": "1.1.0",
+    "telegram-agent-cli-windows-arm64": "1.1.0",
+    "telegram-agent-cli-windows-x64": "1.1.0"
   },
   "repository": {
     "type": "git",
